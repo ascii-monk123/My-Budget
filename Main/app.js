@@ -213,8 +213,43 @@ var uiModule=(function(){
       expenseLabel:'.budget__expenses--value',
       percentageLabel:'.budget__expenses--percentage',
       container:'.container',
-      expPerLabel:'.item__percentage'
+      expPerLabel:'.item__percentage',
+      dateLabel:'.budget__title--month'
     };
+    
+    //Display the sign function ,whether the object is income or expense label
+    
+    var formatNumber=function(num,type){
+        var numSplit,int ,dec;
+    num=Math.abs(num);
+        //Convert number to two fixed decimal places
+        num=num.toFixed(2);
+        //Returns the array of integral and number part
+        
+        numSplit=num.split('.');
+        int =numSplit[0];
+        dec=numSplit[1];
+        
+        if(int.length>3){
+            
+            int=int.substr(0,int.length-3)+','+int.substr(int.length-3,3);
+        }
+        
+        return (type==='exp'?'-':'+')+''+int+'.'+dec;
+        
+     
+    
+        
+        
+    };
+       //Creating a personal forEach for each one of the nodes
+         var nodesForEach=function(list,callback){
+              for(var i=0;i<list.length;i++){
+                  callback(list[i],i);
+              }
+         };
+    
+    
     
     return {
         //takes the values entered by the user
@@ -242,7 +277,7 @@ var uiModule=(function(){
                     element=DOMstrings.incomeContainer;
                     
                     //Storing the html to be printed inside html.And % the propeties which we want to change with the object one's called by function
-                   html= '<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">+%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+                   html= '<div class="item clearfix" id="inc-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
                    
                   
                     
@@ -250,7 +285,7 @@ var uiModule=(function(){
             else if(type==='exp')
                 {  //Stores the class of expense__list and where the expense will appear if entered
                     element=DOMstrings.expenseContainer;
-                    html='<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">-%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
+                    html='<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>';
                     
                 }
                     
@@ -259,14 +294,14 @@ var uiModule=(function(){
                //replacing the id of the container and the html inside it using .replace().Id will be unique for every entry even after it's deleted
              newHtml=html.replace('%id%',obj.id);
             newHtml=newHtml.replace('%description%',obj.description);
-            newHtml=newHtml.replace('%value%',obj.value);
+            newHtml=newHtml.replace('%value%',formatNumber(obj.value,type));
             
             //Inserting our HTML INTO DOM
        document.querySelector(element).insertAdjacentHTML('beforeend',newHtml);
             
             
         },
-        deleteBudget(itemId){
+        deleteBudget:function(itemId){
             var element=document.getElementById(itemId);
             element.parentNode.removeChild(element);
               
@@ -291,28 +326,29 @@ var uiModule=(function(){
         //To display the budget to the user,this function is to be passed to the ctrl object
         displayBudget:function(obj)
         {     //The object is passed from getbudget
-              if(obj.totalBudget>0){
-            document.querySelector(DOMstrings.budgetLabel).textContent='+ '+obj.totalBudget;
-              }
-            else{
-            document.querySelector(DOMstrings.budgetLabel).textContent=obj.totalBudget;
-            }
+             var type;
             
-               if(obj.totalInc!==0){
+              (obj.totalBudget>0)?type='inc':type='exp';
+
+            document.querySelector(DOMstrings.budgetLabel).textContent=formatNumber(obj.totalBudget,type);
+             document.querySelector(DOMstrings.incomeLabel).textContent=formatNumber(obj.totalInc,'inc');          
+          document.querySelector(DOMstrings.expenseLabel).textContent=formatNumber(obj.totalExp,'exp');
             
-            document.querySelector(DOMstrings.incomeLabel).textContent='+'+obj.totalInc;
-               }
-            else{
-                 document.querySelector(DOMstrings.incomeLabel).textContent=obj.totalInc;
+      
+            
+         
+       
+         
+       
            
                 
-            }
-              if(obj.totalExp!==0){
-             document.querySelector(DOMstrings.expenseLabel).textContent='-'+obj.totalExp;
-              }
-            else{
-                 document.querySelector(DOMstrings.expenseLabel).textContent=obj.totalExp;
-            }
+        
+      
+          
+            
+        
+                 
+        
             if(obj.totalPercentage>0){
             document.querySelector(DOMstrings.percentageLabel).textContent=obj.totalPercentage+"%";
             }
@@ -328,12 +364,7 @@ var uiModule=(function(){
              //Returns a list of nodes to the label and selects them sequence-wise
             var labels=document.querySelectorAll(DOMstrings.expPerLabel);
             
-            //Creating a personal forEach for each one of the nodes
-         var nodesForEach=function(list,callback){
-              for(var i=0;i<list.length;i++){
-                  callback(list[i],i);
-              }
-         };
+            
           //It is called by the callback^||
          nodesForEach(labels,function(curr,index){
                       if(percentages[index]>0){
@@ -343,9 +374,33 @@ var uiModule=(function(){
                       
             
         });
+        },
+        displayMonth:function(){
+            
+            var now=new Date();
+            var year=now.getFullYear();
+            var month=now.getMonth();
+            var months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+            document.querySelector(DOMstrings.dateLabel).innerHTML=months[month]+' '+year;
+            
         }
          
-        
+        ,
+        //To change the border color function
+        changeBorder:function(){
+            
+            var colors=document.querySelectorAll(
+            DOMstrings.inputType +',' +
+                DOMstrings.inputDescription + ','
+                + DOMstrings.inputValue );
+            nodesForEach(colors,function(ele){
+                ele.classList.toggle('red-focus');
+            })
+            document.querySelector(DOMstrings.inputBtn).classList.toggle('red');
+            
+            
+            
+        }
     }
     
     
@@ -382,6 +437,9 @@ var controllerModule=(function(bdgtMod,uiMod){
             
          //Setting up the event handler for deleting income and expenses  
             document.querySelector(dom.container).addEventListener('click',ctrlDeleteItem);
+            
+            //Event listener to change color as we select income or expense option
+            document.querySelector(dom.inputType).addEventListener('change', uiModule.changeBorder);
     });
         
             
@@ -519,6 +577,8 @@ var controllerModule=(function(bdgtMod,uiMod){
                 totalBudget:0,
                 totalPercentage:0});
            setUpEventListener();//fires up the event listener
+           //Calling the date function'
+           uiMod.displayMonth();
        }
    };
     
